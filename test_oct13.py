@@ -90,11 +90,11 @@ if __name__ == '__main__':
 
     # Create a dictionary to specify the parameter grid for GridSearchCV
     param_grid = {
-        'n_estimators': (50, 500),
-        'max_depth': (1, 50),
-        'min_samples_split': (2, 20),
-        'min_samples_leaf': (1, 20),
-        'max_features': (0.1, 1.0),
+        'n_estimators': (50,100,200,300,400, 500),
+        'max_depth': (1,10,20,30,40,50),
+        'min_samples_split': (2,5,10,15,20),
+        'min_samples_leaf': (1,2,5,10,15,20),
+        'max_features': (0.1,0.2,0.4,0.6,0.8,1.0),
         'bootstrap': (True, False)
     }
     
