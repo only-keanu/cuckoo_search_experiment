@@ -44,7 +44,7 @@ def objective_function(params):
         random_state=42
     )
 
-    scores = cross_val_score(clf, X_train, Y_train, cv=10, scoring='neg_log_loss')
+    scores = cross_val_score(clf, X_train, Y_train, cv=10, scoring='roc_auc_score')
 
     return np.mean(scores)
 
@@ -89,30 +89,38 @@ if __name__ == '__main__':
     print("Best Accuracy Cuckoo:", best_value)
 
     # Create a dictionary to specify the parameter grid for GridSearchCV
+    # param_grid = {
+    #     'n_estimators': (50,100,200,300,400, 500),
+    #     'max_depth': (1,10,20,30,40,50),
+    #     'min_samples_split': (2,5,10,15,20),
+    #     'min_samples_leaf': (1,2,5,10,15,20),
+    #     'max_features': (0.1,0.2,0.4,0.6,0.8,1.0),
+    #     'bootstrap': (True, False)
+    # }
     param_grid = {
-        'n_estimators': (50,100,200,300,400, 500),
-        'max_depth': (1,10,20,30,40,50),
-        'min_samples_split': (2,5,10,15,20),
-        'min_samples_leaf': (1,2,5,10,15,20),
-        'max_features': (0.1,0.2,0.4,0.6,0.8,1.0),
-        'bootstrap': (True, False)
+    'n_estimators': (50, 500),
+    'max_depth': (1, 50),
+    'min_samples_split': (2, 20),
+    'min_samples_leaf': (1, 20),
+    'max_features': (0.1, 1.0),
+    'bootstrap': (True, False)
     }
     
 
     clf = RandomForestClassifier(random_state=42)
 
-    grid_search = GridSearchCV(estimator=clf, param_grid=param_grid, cv=10, scoring='neg_log_loss', n_jobs=-1)
+    grid_search = GridSearchCV(estimator=clf, param_grid=param_grid, cv=10, scoring='roc_auc_score', n_jobs=-1)
     grid_search.fit(X_train, Y_train)
 
-    best_grid_search_loss = grid_search.best_score_  # Since GridSearchCV returns the negative log loss
+    best_grid_roc = grid_search.best_score_  # Since GridSearchCV returns the negative log loss
     print("Best Hyperparameters Grid:", grid_search.best_params_)
-    print("Best Accuracy Grid:", best_grid_search_loss)
+    print("Best ROC_AUC Grid:", best_grid_roc)
     # Compare the results
-    if best_value < best_grid_search_loss:
+    if best_value < best_grid_roc:
         print("Cuckoo Search found a better set of hyperparameters.")
         print("Best Hyperparameters (Cuckoo Search):", best_nest)
         print("Best Log Loss (Cuckoo Search):", best_value)
     else:
         print("GridSearchCV found a better set of hyperparameters.")
         print("Best Hyperparameters (GridSearchCV):", grid_search.best_params_)
-        print("Best Log Loss (GridSearchCV):", best_grid_search_loss)
+        print("Best Log Loss (GridSearchCV):", best_grid_roc)
