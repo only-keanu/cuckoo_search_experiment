@@ -77,7 +77,34 @@ if __name__ == '__main__':
             if value > objective_function(nests[i]):
                 nests[i] = nest
 
-    best_nest, best_value = max(nest_results, key=lambda x: x[1])
+    best_nest, best_value = min(nest_results, key=lambda x: x[1])
 
     print("Best Hyperparameters:", best_nest)
     print("Best Accuracy:", best_value)
+    
+    # Create a dictionary to specify the parameter grid for GridSearchCV
+    param_grid = {
+        'n_estimators': [50, 500],
+        'max_depth': list(range(1, 51)),
+        'min_samples_split': list(range(2, 21)),
+        'min_samples_leaf': list(range(1, 21)),
+        'max_features': np.arange(0.1, 1.1, 0.1),
+        'bootstrap': [True, False]
+    }
+
+    clf = RandomForestClassifier(random_state=42)
+
+    grid_search = GridSearchCV(estimator=clf, param_grid=param_grid, cv=10, scoring='neg_log_loss', n_jobs=-1)
+    grid_search.fit(X_train, Y_train)
+
+    best_grid_search_loss = -grid_search.best_score_  # Since GridSearchCV returns the negative log loss
+
+    # Compare the results
+    if best_cuckoo_loss < best_grid_search_loss:
+        print("Cuckoo Search found a better set of hyperparameters.")
+        print("Best Hyperparameters (Cuckoo Search):", best_cuckoo_nest)
+        print("Best Log Loss (Cuckoo Search):", best_cuckoo_loss)
+    else:
+        print("GridSearchCV found a better set of hyperparameters.")
+        print("Best Hyperparameters (GridSearchCV):", grid_search.best_params_)
+        print("Best Log Loss (GridSearchCV):", best_grid_search_loss)
