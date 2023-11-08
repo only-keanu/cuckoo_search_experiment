@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from joblib import Parallel, delayed
-from sklearn.model_selection import cross_val_score, GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV
 
 dataset = pd.read_excel('Denguedatasample1.xlsx')
 
@@ -27,7 +27,6 @@ param_space = {
     'min_samples_split': (2, 20),
     'min_samples_leaf': (1, 20),
     'max_features': (0.1, 1.0),
-    'bootstrap': (True, False)
 }
 
 def objective_function(params):
@@ -44,7 +43,7 @@ def objective_function(params):
         random_state=42
     )
 
-    scores = cross_val_score(clf, X_train, Y_train, cv=10, scoring='roc_auc_score')
+    scores = cross_val_score(clf, X_train, Y_train, cv=10, scoring='neg_log_loss')
 
     return np.mean(scores)
 
@@ -88,34 +87,32 @@ if __name__ == '__main__':
     print("Best Hyperparameters Cuckoo:", best_nest)
     print("Best Accuracy Cuckoo:", best_value)
 
-    # Create a dictionary to specify the parameter grid for GridSearchCV
-    # param_grid = {
-    #     'n_estimators': (50,100,200,300,400, 500),
-    #     'max_depth': (1,10,20,30,40,50),
-    #     'min_samples_split': (2,5,10,15,20),
-    #     'min_samples_leaf': (1,2,5,10,15,20),
-    #     'max_features': (0.1,0.2,0.4,0.6,0.8,1.0),
-    #     'bootstrap': (True, False)
-    # }
+    clf_cuckoo = RandomForestClassifier(**best_nest, random_state=42)
+    cv_scores_cuckoo = cross_val_score(clf_cuckoo, X_train, Y_train, cv=10, scoring='neg_log_loss')
+    std_dev_cuckoo = np.std(cv_scores_cuckoo)
+    print("Standard Deviation of Neg-log-loss per Fold (Cuckoo Search):", std_dev_cuckoo)
+
     param_grid = {
-    'n_estimators': (50, 500),
-    'max_depth': (1, 50),
-    'min_samples_split': (2, 20),
-    'min_samples_leaf': (1, 20),
-    'max_features': (0.1, 1.0),
-    'bootstrap': (True, False)
+        'n_estimators': (50, 500),
+        'max_depth': (1, 50),
+        'min_samples_split': (2, 20),
+        'min_samples_leaf': (1, 20),
+        'max_features': (0.1, 1.0),
     }
-    
 
-    clf = RandomForestClassifier(random_state=42)
+    clf_grid = RandomForestClassifier(random_state=42)
 
-    grid_search = GridSearchCV(estimator=clf, param_grid=param_grid, cv=10, scoring='roc_auc_score', n_jobs=-1)
+    grid_search = GridSearchCV(estimator=clf_grid, param_grid=param_grid, cv=10, scoring='neg_log_loss', n_jobs=-1)
     grid_search.fit(X_train, Y_train)
+
+    cv_scores_grid = cross_val_score(clf_grid, X_train, Y_train, cv=10, scoring='neg_log_loss')
+    std_dev_grid = np.std(cv_scores_grid)
+    print("Standard Deviation of Neg-log-loss per Fold (GridSearchCV):", std_dev_grid)
 
     best_grid_roc = grid_search.best_score_  # Since GridSearchCV returns the negative log loss
     print("Best Hyperparameters Grid:", grid_search.best_params_)
     print("Best ROC_AUC Grid:", best_grid_roc)
-    # Compare the results
+
     if best_value < best_grid_roc:
         print("Cuckoo Search found a better set of hyperparameters.")
         print("Best Hyperparameters (Cuckoo Search):", best_nest)
